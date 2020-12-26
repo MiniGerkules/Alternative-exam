@@ -19,12 +19,18 @@ def read_from_file():
 
 #-------------------------------------------
 # Отрисовка графа без отмеченного паросочетания и с ним
-def print_graph(graph, colors):
-    g = nx.Graph()
-    for i in range(len(graph)):
-        for j in range(len(graph)):
-            if graph[i][j] == '1':
-                graph.add_edge(str(i), str(j))
+def print_graph(data, colors):
+    # Создаем узлы графа на основе полученной инфомации из файла
+    graph = nx.Graph()
+    number = len(data)
+    for i in range(number):
+        graph.add_node(str(i))
+
+    # Добавляем ребра между узлами
+    for i in range(number):
+        for j in range(number):
+            if (data[i][j] == '1'):
+                graph.add_edge(str(j), str(i))
 
     # Отрисовка графа
     nx.draw_circular(graph,
