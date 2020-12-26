@@ -1,0 +1,72 @@
+# Импортируем нужные библиотеки и функцию, которую мы описали в другом файле (coloring)
+import networkx as nx
+import time
+import random
+import matplotlib.pyplot as plt
+from Coloring import coloring
+
+#-------------------------------------------
+# Функция, считывающая информацию из файла
+def read_from_file():
+    array = []
+    input_file = open(r'C:\Users\Евгений\OneDrive\Рабочий стол\Проекты\Альтернативный экзамен\Unoptimized_coloring_1\Unoptimized_coloring_1\data.txt', 'r')
+    for line in input_file:
+        array.append(line.split(' '))
+    input_file.close()
+
+    return array
+#-------------------------------------------
+
+#-------------------------------------------
+# Отрисовка графа без отмеченного паросочетания и с ним
+def print_graph(graph, colors):
+    g = nx.Graph()
+    for i in range(len(graph)):
+        for j in range(len(graph)):
+            if graph[i][j] == '1':
+                graph.add_edge(str(i), str(j))
+
+    # Отрисовка графа
+    nx.draw_circular(graph,
+            with_labels=True,
+            node_size=750,
+            node_color = colors)
+    plt.show()
+#-------------------------------------------
+
+#-------------------------------------------
+# Основная функция
+def main():
+    # Читаем информацию из файла
+    data = read_from_file()
+    # Редактируем полученные данные, чтобы они стали пригодны для использования
+    number = len(data)
+    for i in range(number):
+        del data[i][number]
+    
+    colors = coloring(data)
+
+    # Вычисление веремени, затраченного на раскраску графа
+    running_time = time.perf_counter() - start
+    # Вывод времени в файл и в консоль
+    try:
+        output_file = open('result.txt', 'a')
+        output_file.write(f'{running_time}\n')
+    except IOError:
+        print('Не удалось записать время в выходной файл')
+    finally:
+        output_file.close()
+    print(f'{running_time} секунд')
+
+    print_graph(data, colors)
+#-------------------------------------------
+        
+
+if (__name__ == "__main__"):
+    try:
+        # Включаем таймер и начинаем использовать муравьиный алгоритм раскраски графа
+        start = time.perf_counter()
+        main()
+    # Исключение, если не удалось открыть файл с исходными данными
+    except IOError as error:
+        print(error)
