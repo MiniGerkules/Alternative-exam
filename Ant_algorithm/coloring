@@ -1,0 +1,105 @@
+from random import randint
+maxiter = 80
+
+class Ant:
+    def __init__(self, color, pos):
+        self.color = color
+        self.pos = pos
+
+def create_colony(n,colorCount):
+    colony = []
+    for i in range(n):
+        for j in range(n):
+            ant = Ant(randint(0, colorCount), i)
+            colony.append(ant)
+    return colony
+
+def check_coloring(graph,colors):
+    n = len(graph)
+    flag = True
+    for i in range(n):
+        for j in range(i + 1, n):
+            if graph[i][j] == '1' and colors[i] == colors[j]:
+                flag = False
+    return flag
+
+def coloring(g):
+    # находим количество вершин в графе
+    n = len(g)
+
+    # вычисляем количество ребер в графе,
+    # так как граница количества цветов n^2/(n^2-2m)
+    # также создаем список смежных вершин для каждой вершины
+    numberEdges = 0
+    spisok = {i: [] for i in range(n)}
+    for i in range(n):
+        for j in range(n):
+            if g[i][j] == '1':
+                if i > j:
+                    numberEdges += 1
+                spisok[i].append(j)
+
+    numberEdges = int(n * n / (n * n - 2 * numberEdges))
+    colors = [0]*n
+
+    while numberEdges != n:
+
+        # создаем начальную колонию муравьев
+        colony = create_colony(n,numberEdges)
+
+        for iter in range(maxiter):
+            nodes = [{color: 0 for color in range(numberEdges + 1)} for j in range(n)]
+            for ant in colony:
+                nodes[ant.pos][ant.color] += 1
+            for i in range(len(nodes)):
+                maxInd = 0
+                max = 0
+                for j in nodes[i].keys():
+                    if nodes[i][j] > max:
+                        maxInd = j
+                        max = nodes[i][j]
+                colors[i] = maxInd
+
+            for ant in colony:
+                if ant.color != colors[ant.pos]:
+                    flag = True
+                    for i in spisok[ant.pos]:
+                        if colors[i] == ant.color:
+                            ant.pos = i
+                            flag = False
+                    if flag:
+                        ant.pos = spisok[ant.pos][randint(0, len(spisok[ant.pos]) - 1)]
+
+            for i in range(n):
+                for j in range(i + 1, n):
+                    if g[i][j] == '1' and colors[i] == colors[j]:
+                        c1 = 0
+                        c2 = 0
+                        color = colors[i]
+                        for ant in colony:
+                            if ant.pos == i and ant.color == color:
+                                c1 += 1
+                            elif ant.pos == j and ant.color == color:
+                                c2 += 1
+                        if c1 > c2:
+                            for ant in colony:
+                                if ant.pos == j and ant.color == color:
+                                    ant.pos = i
+                        else:
+                            for ant in colony:
+                                if ant.pos == i and ant.color == color:
+                                    ant.pos = j
+
+            buffer = set(node for node in range(n))
+            for ant in colony:
+                if ant.pos in buffer:
+                    buffer.remove(ant.pos)
+            for node in buffer:
+                for i in range(n):
+                    ant = Ant(randint(0, numberEdges), node)
+                    colony.append(ant)
+
+            if check_coloring(g,colors):
+                return colors
+        numberEdges += 1
+    return [color for color in range(numberEdges)]
