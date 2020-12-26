@@ -9,7 +9,7 @@ from Coloring import coloring
 # Функция, считывающая информацию из файла
 def read_from_file():
     array = []
-    input_file = open(r'C:\Users\Евгений\OneDrive\Рабочий стол\Проекты\Альтернативный экзамен\Unoptimized_coloring_1\Unoptimized_coloring_1\data.txt', 'r')
+    input_file = open('ПУТЬ_ДО_ФАЙЛА.txt', 'r')
     for line in input_file:
         array.append(line.split(' '))
     input_file.close()
