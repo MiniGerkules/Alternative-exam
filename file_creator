@@ -23,7 +23,7 @@ def main():
         array = [0] * number
         try:
             # Открываем нужный файлик
-            file = open(r"C:\Users\Евгений\OneDrive\Рабочий стол\Проекты\Альтернативный экзамен\Unoptimized_coloring_1\Unoptimized_coloring_1\data.txt", 'w')
+            file = open("ПУТЬ_ДО_ФАЙЛА.txt", 'w')
             if (answer == 1):
                 # Если граф полный, заполняем все 1, кроме главной диагонали
                 for i in range(number):
