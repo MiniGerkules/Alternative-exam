@@ -23,7 +23,7 @@ def main():
         array = [0] * number
         try:
             # Открываем нужный файлик
-            file = open("ПУТЬ_ДО_ФАЙЛА.txt", 'w')
+            file = open('ПУТЬ_ДО_ФАЙЛА.txt', 'w')
             if (answer == 1):
                 # Если граф полный, заполняем все 1, кроме главной диагонали
                 for i in range(number):
