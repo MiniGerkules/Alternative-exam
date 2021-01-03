@@ -1,7 +1,6 @@
 # Импортируем нужные библиотеки и функцию, которую мы описали в другом файле (coloring)
 import networkx as nx
 import time
-import random
 import matplotlib.pyplot as plt
 from Coloring import coloring
 
@@ -19,24 +18,24 @@ def read_from_file():
 
 #-------------------------------------------
 # Функция, отрисовывающая заданный граф
-def print_graph(data, colors):
+def print_graph(data, color_list):
     # Создаем узлы графа на основе полученной инфомации из файла
     graph = nx.Graph()
     number = len(data)
     for i in range(number):
-        graph.add_node(str(i))
+        graph.add_node(str(i + 1))
 
     # Добавляем ребра между узлами
     for i in range(number):
         for j in range(number):
             if (data[i][j] == '1'):
-                graph.add_edge(str(j), str(i))
+                graph.add_edge(str(j + 1), str(i + 1))
 
     # Отрисовка графа
     nx.draw_circular(graph,
             with_labels=True,
             node_size=750,
-            node_color = colors)
+            node_color = color_list)
     plt.show()
 #-------------------------------------------
 
@@ -50,7 +49,12 @@ def main():
     for i in range(number):
         del data[i][number]
     
-    colors = coloring(data)
+    # Раскрашиваем граф
+    colors_dict = coloring(data, number)
+    # Превращаем словарь в список, где индекс -- имя вершины, а значение -- цвет
+    color_list = []
+    for i in range(number):
+        color_list.append(colors_dict[i+1])
 
     # Вычисление веремени, затраченного на раскраску графа
     running_time = time.perf_counter() - start
@@ -64,7 +68,8 @@ def main():
         output_file.close()
     print(f'{running_time} секунд')
 
-    print_graph(data, colors)
+    # Отрисовываем граф
+    print_graph(data, color_list)
 #-------------------------------------------
         
 
