@@ -1,59 +1,55 @@
 # Библиотека для генерации псевдорандомных чисел
 import random
 
-#-------------------------------------------
-# Функция записывает двумерный массив в файл
-def print_in_file():
-    for i in range(number):
-        for j in range(number):
-            file.write(array[i][j])
-        file.write('\n')
-#-------------------------------------------
-
-#-------------------------------------------
 # Главная функция
 def main():
-    print("Введите количество вершин -- ", end = '')
+    print('Введите количество вершин -- ', end = '')
     number = int(input())
     print('\n1 -- Создать полный граф')
     print('2 -- Создать граф с рандомными ребрами')
+    print('Your choise is -- ', end = '')
     answer = int(input())
 
     if ((answer == 1) or (answer == 2)):
         array = [0] * number
-        try:
-            # Открываем нужный файлик
-            file = open('ПУТЬ_ДО_ФАЙЛА.txt', 'w')
-            if (answer == 1):
-                # Если граф полный, заполняем все 1, кроме главной диагонали
-                for i in range(number):
-                    array[i] = [0] * number
-                    for j in range(number):
-                        if (i != j):
-                            array[i][j] = '1 '
-                        else:
-                            array[i][j] = '0 '
-            else:
-                array = [[0] * number for i in range(number)]
-                for i in range(number):
-                    # Если граф рандомный, заполняем только верхний треугольник. Нижний треугольник копируется, так как матрица симметричная
-                    bias = i
-                    for j in range(bias, number):
-                        if (i != j):
-                            array[i][j] = str(int(random.random() + 0.5)) + ' '
-                            array[j][i] = array[i][j]
-                        else:
-                            array[i][j] = '0 '
-            # Записываем двумерный массив в файл
-            print_in_file()
-            file.close()
-            print('Данные успешно записаны')
+        # Открываем нужный файлик
+        file = open(r'C:\Users\Евгений\OneDrive\Рабочий стол\Проекты\Альтернативный экзамен\Unoptimized_coloring_1\Unoptimized_coloring_1\data.txt', 'w')
+        if (answer == 1):
+            # Если граф полный, заполняем все 1, кроме главной диагонали
+            for i in range(number):
+                array[i] = [0] * number
+                for j in range(number):
+                    if (i != j):
+                        array[i][j] = '1 '
+                    else:
+                        array[i][j] = '0 '
+        else:
+            array = [[0] * number for i in range(number)]
+            for i in range(number):
+                # Если граф рандомный, заполняем только верхний треугольник. Нижний треугольник копируется, так как матрица симметричная
+                bias = i
+                for j in range(bias, number):
+                    if (i != j):
+                        array[i][j] = str(int(random.random() + 0.5)) + ' '
+                        array[j][i] = array[i][j]
+                    else:
+                        array[i][j] = '0 '
+
+        # Записываем двумерный массив в файл
+        for i in range(number):
+            for j in range(number):
+                file.write(array[i][j])
+            file.write('\n')
+
+        file.close()
+        print('Данные успешно записаны')
+
     else:
         print('Некорректный ввод!')
 #-------------------------------------------
 
-if (__name__ == '__main__'):
+if (__name__ == "__main__"):
     try:
         main()
-    except IOError:
-        print('Файл не удалось открыть')
+    except IOError as error:
+        print(error)
