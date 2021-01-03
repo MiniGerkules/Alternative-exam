@@ -7,7 +7,6 @@ number_of_iteration = 20
 # Класс, описывающий муравья, используемого в нашем алгоритме
 class Ant:
     def __init__(self, position, color_of_ant):
-        self.current_pos = position         # Текущая позиция муравья
         self.color = color_of_ant           # Цвет вершины
 #---------------------------------------------------
 
@@ -145,7 +144,6 @@ def color_definition(pheromon, node, id, number, bound):
             while (j < size):
                 # Выбираем смежную вершину и смотрим ее муравьев. Если они нужного нам цвета, вытягиваем их
                 if (node[node[id].adjacent[i] - 1].ants[j].color == color):
-                    node[node[id].adjacent[i] - 1].ants[j].current_pos = id + 1
                     node[id].ants.append(node[node[id].adjacent[i] - 1].ants[j])
                     del node[node[id].adjacent[i] - 1].ants[j]
                     size -= 1
