@@ -51,13 +51,15 @@ def main():
     
     # Раскрашиваем граф
     colors_dict = coloring(data, number)
+
+    # Вычисление веремени, затраченного на раскраску графа
+    running_time = time.perf_counter() - start
+
     # Превращаем словарь в список, где индекс -- имя вершины, а значение -- цвет
     color_list = []
     for i in range(number):
         color_list.append(colors_dict[i+1])
 
-    # Вычисление веремени, затраченного на раскраску графа
-    running_time = time.perf_counter() - start
     # Вывод времени в файл и в консоль
     try:
         output_file = open('result.txt', 'a')
