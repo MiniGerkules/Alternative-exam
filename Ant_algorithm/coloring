@@ -126,7 +126,7 @@ def color_definition(pheromon, node, id, number, bound):
     for j in range(bound):
         interval[j] = pheromon[id][j] * numbers_of_ants[j] / denominator
 
-    # Выбираем рандомное значение из возможного промежутка и на его основе выбираем вершину, куда идет муравей
+    # Выбираем рандомное значение из возможного промежутка и на его основе выбираем цвет
     roulette = random.random()
     flag = True
     sum = 0
