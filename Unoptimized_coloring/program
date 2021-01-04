@@ -116,6 +116,7 @@ def main():
         output_file.close()
     print(f'{running_time} секунд')
 
+    # Превращаем словарь в список, где индекс -- имя вершины, а значение -- цвет
     color_list = []
     for i in range(number):
         color_list.append(color_of_nodes[str(i+1)])
