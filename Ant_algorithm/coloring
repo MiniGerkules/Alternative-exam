@@ -77,9 +77,40 @@ def vertex_maker(data, number):
 def creating_ants(top, id, number, bound):
     # Для вершины создаем number муравьев
     for j in range(number):
-        top.ants.append(Ant((id + 1), random.randint(1, bound)))
+        top.ants.append(Ant(random.randint(1, bound)))
 
     return top
+#---------------------------------------------------
+
+#---------------------------------------------------
+# Функция, подсчитывающая количество муравьев по цветам
+def counting_ants(node, id, bound):
+    # Создаем перечень муравьев в данной вершине
+    # Идекс -- цвет, значение -- количество муравьев с этим цветом
+    numbers_of_ants = [0] * bound
+    # Высчитываем количество муравьев одного цвета
+    for i in range(len(node[id].ants)):
+        numbers_of_ants[node[id].ants[i].color - 1] += 1
+
+    return numbers_of_ants
+#---------------------------------------------------
+
+#---------------------------------------------------
+# Функция, создающая вероятности на основе феромона количества муравьев
+def creation_of_probabilities(pheromon, id, numbers_of_ants, bound):
+    # Вычисляем знаменатель нашей дроби
+    # pheromon[id][j] -- обратная связь с предыдущего прохода относительно j-го цвета
+    # numbers_of_ants[j] -- количество муравьев j-го цвета
+    denominator = 0
+    for j in range(bound):
+        denominator += pheromon[id][j] * numbers_of_ants[j]
+
+    # Создаем список вероятностей окрашивания вершины в j-ый цвет
+    interval = [0] * bound
+    for j in range(bound):
+        interval[j] = pheromon[id][j] * numbers_of_ants[j] / denominator
+
+    return interval
 #---------------------------------------------------
 
 #---------------------------------------------------
@@ -103,32 +134,18 @@ def color_definition(pheromon, node, id, number, bound):
                         else:
                             counter += 1
             
-            # Если колония на нашем узле опустела, повторяем цикл
+            # Если колония на нашем узле не опустела, выходим из цикла, иначе -- повторяем цикл
             if (len(node[id].ants) != 0):
                 break
 
-    # Создаем перечень муравьев в данной вершине
-    # Идекс -- цвет, значение -- количество муравьев с этим цветом
-    numbers_of_ants = [0] * bound
-    # Высчитываем количество муравьев одного цвета
-    for i in range(len(node[id].ants)):
-        numbers_of_ants[node[id].ants[i].color - 1] += 1
+    # Подсчитываем количество муравьев по цветам
+    numbers_of_ants = counting_ants(node, id, bound)
 
-    # Вычисляем знаменатель нашей дроби
-    # pheromon[id][j] -- обратная связь с предыдущего прохода относительно j-го цвета
-    # numbers_of_ants[j] -- количество муравьев j-го цвета
-    denominator = 0
-    for j in range(bound):
-        denominator += pheromon[id][j] * numbers_of_ants[j]
-
-    # Создаем список вероятностей окрашивания вершины в j-ый цвет
-    interval = [0] * bound
-    for j in range(bound):
-        interval[j] = pheromon[id][j] * numbers_of_ants[j] / denominator
+    # Вычисляем вероятности выбора цвета
+    interval = creation_of_probabilities(pheromon, id, numbers_of_ants, bound)
 
     # Выбираем рандомное значение из возможного промежутка и на его основе выбираем цвет
     roulette = random.random()
-    flag = True
     sum = 0
     for i in range(len(interval)):
         sum += interval[i]
@@ -136,19 +153,72 @@ def color_definition(pheromon, node, id, number, bound):
             color = i + 1
             break
 
+    # Так как мы уже нашли цвет вершины, нам не нужны муравьи, у которых цвет такой же, как у вершины
+    i = 0
+    size = len(node[id].ants)
+    while (i < size):
+        if (node[id].ants[i].color == color):
+            del node[id].ants[i]
+            size -= 1
+        else:
+            i += 1
+        
     # Мы выбрали i-ый цвет. Теперь нужно "вытянуть" муравьев этого цвета из других НЕРАСКРАШЕННЫХ вершин
+    # Также нам нужно передать муравьев цвета отличного от цвета вершины в другие вершины
+    alien_ants = []                                                         # Список муравьев других вершин
     for i in range(len(node[id].adjacent)):
         if (node[node[id].adjacent[i] - 1].color == None):
+            # Формируем список цветов муравьев. Первое значение каждого одномерного списка -- имя вершины, у которой мы смотрим муравьев
+            helper = []
+            helper.append(node[id].adjacent[i])
+            helper.extend([0] * bound)
+
             size = len(node[node[id].adjacent[i] - 1].ants)
             j = 0
             while (j < size):
                 # Выбираем смежную вершину и смотрим ее муравьев. Если они нужного нам цвета, вытягиваем их
                 if (node[node[id].adjacent[i] - 1].ants[j].color == color):
-                    node[id].ants.append(node[node[id].adjacent[i] - 1].ants[j])
                     del node[node[id].adjacent[i] - 1].ants[j]
                     size -= 1
                 else:
+                # Если цвет не совпал, учитываем муравья в нашем посчете
+                    helper[node[node[id].adjacent[i] - 1].ants[j].color] += 1
                     j += 1
+            
+            alien_ants.append(helper)
+
+    # Высчитываем вероятность попадание муравья в вершину alien_ants[j][0]
+    i = 0
+    size = len(node[id].ants)
+    while (i < size):
+        denominator = 0
+        for j in range(len(alien_ants)):
+            denominator += alien_ants[j][node[id].ants[i].color]
+
+        if (denominator != 0):                                              # Если муравьи искомого цвета существуют
+            # Подсчитываем вероятность попадания муравья в вершину
+            interval = [0] * len(alien_ants)
+            for j in range(len(alien_ants)):
+                interval[j] = alien_ants[j][node[id].ants[i].color] / denominator
+
+            # Бросаем кость и определяем вершину, в которую отправится муравей
+            roulette = random.random()
+            sum = 0
+            for j in range(len(interval)):
+                sum += interval[j]
+                if (roulette < sum):
+                    point = alien_ants[j][0] - 1
+                    break
+
+            # Отправляем муравья в выбранную вершину
+            node[point].ants.append(node[id].ants[i])
+            del node[id].ants[i]
+
+        else:                                                               # Иначе помещаем муравья в случайную вершину
+            random_id = random.randint(0, len(node[id].adjacent) - 1)
+            node[node[id].adjacent[random_id] - 1].ants.append(node[id].ants[i])
+            del node[id].ants[i]
+        size -= 1
 
     return color
 #---------------------------------------------------
