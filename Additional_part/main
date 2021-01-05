@@ -1,0 +1,156 @@
+import math
+import random
+import time
+from matplotlib import pyplot as plt
+
+class AntAlg:
+    class Edge:
+        def __init__(self, a, b, weight, initial_pheromone):
+            self.a = a #Вершина от которой ребро идет
+            self.b = b #Вершина к которой ребро идет
+            self.weight = weight
+            self.pheromone = initial_pheromone
+
+    class Ant:
+        def __init__(self, alpha, beta, num_nodes, edges):
+            self.alpha = alpha
+            self.beta = beta
+            self.num_nodes = num_nodes
+            self.edges = edges
+            self.tour = None
+            self.distance = 0.0
+
+        def _select_node(self):
+            roulette_wheel = 0.0
+            heuristic_total = 0.0
+            unvisited_nodes = [node for node in range(self.num_nodes) if node not in self.tour] #Создаем массив с номерами непосещенных вершин
+            for unvisited_node in unvisited_nodes: #Смотрим все непощесенные вершины и складываем расстояние до них
+                heuristic_total += self.edges[self.tour[-1]][unvisited_node].weight
+            for unvisited_node in unvisited_nodes: #Находим сумму произведений ТАУ на ЭТА
+                roulette_wheel += pow(self.edges[self.tour[-1]][unvisited_node].pheromone, self.alpha) * pow((heuristic_total / self.edges[self.tour[-1]][unvisited_node].weight), self.beta)
+            random_value = random.uniform(0.0, roulette_wheel)
+            wheel_position = 0.0
+            for unvisited_node in unvisited_nodes: #Определяем вершину, на которую попало random value
+                wheel_position += pow(self.edges[self.tour[-1]][unvisited_node].pheromone, self.alpha) * pow((heuristic_total / self.edges[self.tour[-1]][unvisited_node].weight), self.beta)
+                if wheel_position >= random_value:
+                    return unvisited_node
+
+        def find_tour(self):  # Построение пути
+            self.tour = [random.randint(0, self.num_nodes - 1)]  # Выбираем случайную начальную вершину
+            while len(self.tour) < self.num_nodes:  # Пока не закончатся вершины
+                self.tour.append(self._select_node())  # Выбираем следующую вершину и добавляем ее в путь
+            return self.tour
+
+        def get_distance(self):
+            self.distance = 0.0
+            for i in range(self.num_nodes):
+                self.distance += self.edges[self.tour[i]][self.tour[(i + 1) % self.num_nodes]].weight #Находим дистанцию, пройденную за проход от вершины i в вершину i+1
+            return self.distance
+
+    def __init__(self, mode='ACS', colony_size=10, elite_pheromon=1.0, min_scaling_factor=0.001, alpha=1.0, beta=3.0,
+                 rho=0.3, Q=1.0, initial_pheromone=1.0, steps=100, nodes=None):
+        self.mode = mode
+        self.colony_size = colony_size
+        self.elite_pheromon = elite_pheromon
+        self.min_scaling_factor = min_scaling_factor
+        self.rho = rho
+        self.Q = Q
+        self.steps = steps
+        self.num_nodes = len(nodes)
+        self.nodes = nodes
+        self.labels = range(1, self.num_nodes + 1)
+        self.edges = [[None] * self.num_nodes for _ in range(self.num_nodes)]
+        for i in range(self.num_nodes):
+            for j in range(i + 1, self.num_nodes):
+                self.edges[i][j] = self.edges[j][i] = self.Edge(i, j,
+                        math.sqrt(pow(self.nodes[i][0] - self.nodes[j][0], 2.0) + pow(self.nodes[i][1] - self.nodes[j][1], 2.0)),initial_pheromone) #Инициализируем ребра между вершинами
+        self.ants = [self.Ant(alpha, beta, self.num_nodes, self.edges) for _ in range(self.colony_size)]
+        self.global_best_tour = None
+        self.global_best_distance = float("inf")
+
+    def _add_pheromone(self, tour, distance, weight=1.0):
+        pheromone_to_add = self.Q / distance
+        for i in range(self.num_nodes):
+            self.edges[tour[i]][tour[(i + 1) % self.num_nodes]].pheromone += weight * pheromone_to_add #Добавляем феромоны на ребра прохода
+
+    def _max_min(self):
+        for step in range(self.steps): #Номер итерации
+            iteration_best_tour = None
+            iteration_best_distance = float("inf")
+            for ant in self.ants: #Номер муравья
+                ant.find_tour()
+                if ant.get_distance() < iteration_best_distance: #Сохраняем лучшие результаты
+                    iteration_best_tour = ant.tour
+                    iteration_best_distance = ant.distance
+            if float(step + 1) / float(self.steps) <= 0.8: #Если выполнено до 80% (включительно) итераций, тогда добавляем феромон на лучший путь на текущем шаге
+                self._add_pheromone(iteration_best_tour, iteration_best_distance)
+                max_pheromone = self.Q / iteration_best_distance
+            else:
+                if iteration_best_distance < self.global_best_distance:
+                    self.global_best_tour = iteration_best_tour
+                    self.global_best_distance = iteration_best_distance
+                self._add_pheromone(self.global_best_tour, self.global_best_distance)
+                max_pheromone = self.Q / self.global_best_distance
+            min_pheromone = max_pheromone * self.min_scaling_factor #Минимальный уровень феромона равен определенной части от максимального уровня феромона
+            for i in range(self.num_nodes):
+                for j in range(i + 1, self.num_nodes):
+                    self.edges[i][j].pheromone *= (1.0 - self.rho) #Высыхание феромонов на всех ребрах
+                    if self.edges[i][j].pheromone > max_pheromone:
+                        self.edges[i][j].pheromone = max_pheromone #Если на ребре феромона больше верхней границы, то понижаем его количество до этой границы
+                    elif self.edges[i][j].pheromone < min_pheromone:
+                        self.edges[i][j].pheromone = min_pheromone #Если на ребре феромона меньше нижней границы, то повышаем его количество до этой границы
+
+    def elite(self):
+        for step in range(self.steps): #Номер итерации
+            for i in range(self.num_nodes):
+                for j in range(i + 1, self.num_nodes):
+                    self.edges[i][j].pheromone *= (1.0 - self.rho) #Высыхание феромонов на всех ребрах
+
+            for ant in self.ants: #Номер муравья
+                self._add_pheromone(ant.find_tour(), ant.get_distance()) #Находим путь и добавляем на его ребра феромоны
+                if ant.distance < self.global_best_distance: #Сохраняем лучшие результаты
+                    self.global_best_tour = ant.tour
+                    self.global_best_distance = ant.distance
+            self._add_pheromone(self.global_best_tour, self.global_best_distance, weight=self.elite_pheromon) #Добавляем элитных муравьев на лучший путь
+
+
+    def run(self):
+        if self.mode == 'MMAS':
+            self._max_min()
+        elif self.mode == 'Elite':
+            self.elite()
+        print('Маршрут : <- {0} ->'.format(' - '.join(str(self.labels[i]) for i in self.global_best_tour)))
+        print('Минимальное расстояние рассчитанное алгоритмом: {0}'.format(round(self.global_best_distance, 2)))
+
+    def plot(self, annotation_size=8, dpi=120, save=True, name=None):
+        x = [self.nodes[i][0] for i in self.global_best_tour] #Добавляем координаты вершин
+        x.append(x[0]) # Замыкаем путь
+        y = [self.nodes[i][1] for i in self.global_best_tour] #Добавляем координаты вершин
+        y.append(y[0]) # Замыкаем путь
+        plt.plot(x, y, linewidth=1) # Отображение пути
+        plt.scatter(x, y, s=math.pi * 2) # Отображение вершин
+        plt.title(self.mode) # Вывод названия изображения
+        for i in self.global_best_tour:
+            plt.annotate(self.labels[i], self.nodes[i], size=annotation_size) #Отображение номеров вершин
+        if save:  # Сохраняем изображение
+            if name is None:
+                name = '{0}.png'.format(self.mode)
+            plt.savefig(name, dpi=dpi)
+        plt.show()
+
+if __name__ == '__main__':
+    _verticies = 30
+    _colony_size = 5
+    _steps = 50
+    _size = 300
+    _nodes = [(random.uniform(-_size, _size), random.uniform(-_size, _size)) for _ in range(_verticies)]  # Координаты вершин (создание графа)
+
+    print("Элитные муравьи")
+    elite = AntAlg(mode='Elite', colony_size=_colony_size, steps=_steps, nodes=_nodes, elite_pheromon=3)
+    elite.run()
+    elite.plot()
+
+    print("\nАлгоритм Max Min")
+    mmas = AntAlg(mode='MMAS', colony_size=_colony_size, steps=_steps, nodes=_nodes)
+    mmas.run()
+    mmas.plot()
