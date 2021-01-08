@@ -115,43 +115,45 @@ def color_definition(pheromon, node, id, number, bound):
             
             alien_ants.append(helper)
 
-    # Распределяем муравьев цвета i по смежным вершинам
-    for i in range(bound):
-        # Если цвет муравев равен цвету текущей вершины, пропускаем итерацию
-        if (i == (color - 1)):
-            continue
+    # Если у вершины есть смежные непокрашенные
+    if (len(alien_ants) != 0):
+        # Распределяем муравьев цвета i по смежным вершинам
+        for i in range(bound):
+            # Если цвет муравев равен цвету текущей вершины, пропускаем итерацию
+            if (i == (color - 1)):
+                continue
 
-        # Вычисляем знаменатель дроби для текущего цвета
-        denominator = 0
-        for j in range(len(alien_ants)):
-            denominator += alien_ants[j][i + 1]
-
-        if (denominator != 0):                                      # Если муравьи искомого цвета существуют
-            # Выбираем рандомное значение из возможного промежутка (от 0 до 1). На его основе будем выбирать вершину
-            roulette = random.random()
-            sum = 0
-
-            # Подсчитываем вероятность попадания муравьев определенного цвета в вершину
-            interval = [0] * len(alien_ants)
+            # Вычисляем знаменатель дроби для текущего цвета
+            denominator = 0
             for j in range(len(alien_ants)):
-                interval[j] = alien_ants[j][i + 1] / denominator
-                sum += interval[j]
-                if (roulette < sum):
-                    point = alien_ants[j][0] - 1
-                    break                
+                denominator += alien_ants[j][i + 1]
 
-            # Отправляем муравьев определенного цвета в выбранную вершину
-            node[point].number_of_ants += node[id].ants[i]
-            node[point].ants[i] += node[id].ants[i]
-            node[id].number_of_ants -= node[id].ants[i]
-            node[id].ants[i] = 0
+            if (denominator != 0):                                      # Если муравьи искомого цвета существуют
+                # Выбираем рандомное значение из возможного промежутка (от 0 до 1). На его основе будем выбирать вершину
+                roulette = random.random()
+                sum = 0
 
-        else:                                                               # Иначе помещаем муравьев определенного цвета в случайную вершину
-            random_id = random.randint(0, node[id].adjacent_len - 1)
-            node[node[id].adjacent[random_id] - 1].number_of_ants += node[id].ants[i]
-            node[node[id].adjacent[random_id] - 1].ants[i] += node[id].ants[i]
-            node[id].number_of_ants -= node[id].ants[i]
-            node[id].ants[i] = 0
+                # Подсчитываем вероятность попадания муравьев определенного цвета в вершину
+                interval = [0] * len(alien_ants)
+                for j in range(len(alien_ants)):
+                    interval[j] = alien_ants[j][i + 1] / denominator
+                    sum += interval[j]
+                    if (roulette < sum):
+                        point = alien_ants[j][0] - 1
+                        break                
+
+                # Отправляем муравьев определенного цвета в выбранную вершину
+                node[point].number_of_ants += node[id].ants[i]
+                node[point].ants[i] += node[id].ants[i]
+                node[id].number_of_ants -= node[id].ants[i]
+                node[id].ants[i] = 0
+
+            else:                                                               # Иначе помещаем муравьев определенного цвета в случайную вершину
+                random_id = random.randint(0, node[id].adjacent_len - 1)
+                node[node[id].adjacent[random_id] - 1].number_of_ants += node[id].ants[i]
+                node[node[id].adjacent[random_id] - 1].ants[i] += node[id].ants[i]
+                node[id].number_of_ants -= node[id].ants[i]
+                node[id].ants[i] = 0
 
     return color
 #---------------------------------------------------
