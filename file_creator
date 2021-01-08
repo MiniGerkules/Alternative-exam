@@ -12,7 +12,7 @@ def main():
     answer = int(input())
 
     if ((answer == 1) or (answer == 2) or (answer == 3)):
-        array = [0] * number
+        array = ['0 '] * number
         # Открываем нужный файлик
         file = open('ПУТЬ_ДО_ФАЙЛА.txt', 'w')
         if (answer == 1):
@@ -24,7 +24,7 @@ def main():
                         array[i][j] = '1 '
 
         elif (answer == 2):
-            array = [[0] * number for i in range(number)]
+            array = [['0 '] * number for i in range(number)]
             for i in range(number):
                 # Если граф рандомный, заполняем только верхний треугольник. Нижний треугольник копируется, так как матрица симметричная
                 bias = i
@@ -32,12 +32,11 @@ def main():
                     if (i != j):
                         array[i][j] = str(int(random.random() + 0.5)) + ' '
                         array[j][i] = array[i][j]
-                    else:
-                        array[i][j] = '0 '
+
         else:
             # Если граф пустой заполняем все 0
             for i in range(number):
-                array[i] = [0] * number
+                array[i] = ['0 '] * number
 
         # Записываем двумерный массив в файл
         for i in range(number):
