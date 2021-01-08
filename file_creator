@@ -18,7 +18,7 @@ def main():
         if (answer == 1):
             # Если граф полный, заполняем все 1, кроме главной диагонали
             for i in range(number):
-                array[i] = [0] * number
+                array[i] = ['0 '] * number
                 for j in range(number):
                     if (i != j):
                         array[i][j] = '1 '
