@@ -7,7 +7,7 @@ def main():
     number = int(input())
     print('\n1 -- Создать полный граф')
     print('2 -- Создать граф с рандомными ребрами')
-    print('Your choise is -- ', end = '')
+    print('Ваш выбор -- ', end = '')
     answer = int(input())
 
     if ((answer == 1) or (answer == 2)):
