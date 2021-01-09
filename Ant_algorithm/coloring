@@ -1,32 +1,37 @@
 # Импортируем нужные библиотеки и определяем константу количества итераций
 import random
 from math import ceil
-number_of_iteration = 5
+number_of_iteration = 10
+alpha = 1
+betta = 1
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
 # Класс описывающий вершину графа
 class Node:
     def __init__(self):
-        self.ants = []                      # Список муравьев, находящихся в вершине (индекс -- цвет, значение -- количество муравьев этого цвета)
-        self.number_of_ants = 0             # Количество муравьев в вершине
-        self.adjacent = []                  # Список смежных вершин
-        self.color = None                   # Цвет вершины
-        self.adjacent_len = 0               # Размер списка смежных вершин
-#---------------------------------------------------
+        self.ants = []              # Список муравьев, находящихся в вершине (индекс -- цвет, значение -- количество муравьев этого цвета)
+        self.number_of_ants = 0     # Количество муравьев в вершине
+        self.adjacent = []          # Список смежных вершин
+        self.color = None           # Цвет вершины
+        self.adjacent_len = 0       # Размер списка смежных вершин
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, находящая верхнюю границу и создающая вершины
 def initialization(data, tops, number):
-    edge = 0                                        # Инициализируем количество ребер
+    edge = 0  # Инициализируем количество ребер
 
     for i in range(number):
-        tops.append(Node())                         # Добавляем вершины в граф
-        for j in range(number):                     # Добавляем смежные вершины
-            if (data[i][j] == '1'):
+        tops.append(Node())  # Добавляем вершины в граф
+        for j in range(number):  # Добавляем смежные вершины
+            if data[i][j] == '1':
                 tops[i].adjacent.append(j + 1)
                 tops[i].adjacent_len += 1
 
-        edge += tops[i].adjacent_len                # Считаем количество ребер (их будет в 2 раза больше, чем надо)
+        edge += tops[i].adjacent_len  # Считаем количество ребер (их будет в 2 раза больше, чем надо)
 
     # Истинное значение edge = 1/2 * текущий_edge, в в формуле edge умножается на 2 --> получается 1
     # Вычисляем верхнюю границу
@@ -34,20 +39,24 @@ def initialization(data, tops, number):
     bound = ceil(bound)
 
     return bound
-#---------------------------------------------------
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, инициализирующая феромон
-def initialization_feromone(number, bound):
+def initialization_pheromone(number, bound):
     # Создаем одномерный список
-    pheromon = [0] * number
+    pheromone = [0] * number
     for i in range(number):
-        pheromon[i] = [1] * bound                   # Создаем двумерный список, содержащий единичные значения
+        pheromone[i] = [1] * bound  # Создаем двумерный список, содержащий единичные значения
 
-    return pheromon
-#---------------------------------------------------
+    return pheromone
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, создающая муравьев на каждой вершине графа
 def creating_ants(top, number, bound):
     # Инициализируем все поля
@@ -60,31 +69,33 @@ def creating_ants(top, number, bound):
     top.number_of_ants = number
 
     return top
-#---------------------------------------------------
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, определяющая цвет вершины
-def color_definition(pheromon, node, id, number, bound):
+def color_definition(pheromone, node, id, number, bound):
     # Проверка на то, что в данной вершине нет муравьев
-    if (node[id].number_of_ants == 0):
+    if node[id].number_of_ants == 0:
         while True:
             # Создаем новую колонию муравьев
             node[id] = creating_ants(node[id], number, bound)
 
             # Удаляем муравьев цвета смежных вершин (чтобы не получить неправильную раскраску)
             for i in range(node[id].adjacent_len):
-                if (node[node[id].adjacent[i] - 1].color != None):
+                if node[node[id].adjacent[i] - 1].color is not None:
                     node[id].number_of_ants -= node[id].ants[node[node[id].adjacent[i] - 1].color - 1]
                     node[id].ants[node[node[id].adjacent[i] - 1].color - 1] = 0
-            
+
             # Если колония на нашем узле не опустела, выходим из цикла, иначе -- повторяем цикл
-            if (node[id].number_of_ants != 0):
+            if node[id].number_of_ants != 0:
                 break
 
     # Вычисляем знаменатель нашей дроби
     denominator = 0
     for i in range(bound):
-        denominator += pheromon[id][i] * node[id].ants[i]
+        denominator += (pheromone[id][i] ** alpha) * (node[id].ants[i] ** betta)
 
     # Выбираем рандомное значение из возможного промежутка (от 0 до 1). На его основе будем выбирать цвет
     roulette = random.random()
@@ -93,42 +104,41 @@ def color_definition(pheromon, node, id, number, bound):
     # Создаем список вероятностей окрашивания вершины в i-ый цвет и выбираем цвет
     interval = [0] * bound
     for i in range(bound):
-        interval[i] = pheromon[id][i] * node[id].ants[i] / denominator
+        interval[i] = (pheromone[id][i] ** alpha) * (node[id].ants[i] ** betta) / denominator
         sum += interval[i]
-        if (roulette < sum):
+        if roulette < sum:
             color = i + 1
             break
 
     # Мы выбрали i-ый цвет. Теперь нужно "вытянуть" муравьев этого цвета из других НЕРАСКРАШЕННЫХ вершин
     # Также нам нужно передать муравьев цвета отличного от цвета вершины в другие вершины
-    alien_ants = []                                                         # Список муравьев других вершин
+    alien_ants = []  # Список муравьев других вершин
     for i in range(node[id].adjacent_len):
-        if (node[node[id].adjacent[i] - 1].color == None):
+        if node[node[id].adjacent[i] - 1].color is None:
             # Удаляем муравьев того же цвета, что и наша вершина
             node[node[id].adjacent[i] - 1].number_of_ants -= node[node[id].adjacent[i] - 1].ants[color - 1]
             node[node[id].adjacent[i] - 1].ants[color - 1] = 0
 
             # Формируем двумерный список муравьев всех смежных вершин
-            helper = []
-            helper.append(node[id].adjacent[i])
+            helper = [node[id].adjacent[i]]
             helper.extend(node[node[id].adjacent[i] - 1].ants)
-            
+
             alien_ants.append(helper)
 
     # Если у вершины есть смежные непокрашенные
-    if (len(alien_ants) != 0):
+    if len(alien_ants) != 0:
         # Распределяем муравьев цвета i по смежным вершинам
         for i in range(bound):
             # Если цвет муравев равен цвету текущей вершины, пропускаем итерацию
-            if (i == (color - 1)):
+            if i == (color - 1):
                 continue
 
             # Вычисляем знаменатель дроби для текущего цвета
             denominator = 0
             for j in range(len(alien_ants)):
-                denominator += alien_ants[j][i + 1]
+                denominator += alien_ants[j][i + 1] ** betta
 
-            if (denominator != 0):                                      # Если муравьи искомого цвета существуют
+            if denominator != 0:  # Если муравьи искомого цвета существуют
                 # Выбираем рандомное значение из возможного промежутка (от 0 до 1). На его основе будем выбирать вершину
                 roulette = random.random()
                 sum = 0
@@ -136,19 +146,19 @@ def color_definition(pheromon, node, id, number, bound):
                 # Подсчитываем вероятность попадания муравьев определенного цвета в вершину
                 interval = [0] * len(alien_ants)
                 for j in range(len(alien_ants)):
-                    interval[j] = alien_ants[j][i + 1] / denominator
+                    interval[j] = (alien_ants[j][i + 1] ** betta) / denominator
                     sum += interval[j]
-                    if (roulette < sum):
+                    if roulette < sum:
                         point = alien_ants[j][0] - 1
-                        break                
+                        break
 
-                # Отправляем муравьев определенного цвета в выбранную вершину
+                        # Отправляем муравьев определенного цвета в выбранную вершину
                 node[point].number_of_ants += node[id].ants[i]
                 node[point].ants[i] += node[id].ants[i]
                 node[id].number_of_ants -= node[id].ants[i]
                 node[id].ants[i] = 0
 
-            else:                                                               # Иначе помещаем муравьев определенного цвета в случайную вершину
+            else:  # Иначе помещаем муравьев определенного цвета в случайную вершину
                 random_id = random.randint(0, node[id].adjacent_len - 1)
                 node[node[id].adjacent[random_id] - 1].number_of_ants += node[id].ants[i]
                 node[node[id].adjacent[random_id] - 1].ants[i] += node[id].ants[i]
@@ -156,46 +166,51 @@ def color_definition(pheromon, node, id, number, bound):
                 node[id].ants[i] = 0
 
     return color
-#---------------------------------------------------
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, обновляющая феромон
-def update_pheromon(pheromon, current_coloring, col_num, number, bound):
-    p = 0.9                                                                 # Параметр испарения
+def update_pheromone(pheromone, current_coloring, col_num, number, bound):
+    p = 0.9  # Параметр испарения
     for i in range(number):
         for j in range(bound):
-            pheromon[i][j] *= p
-    
+            pheromone[i][j] *= p
+
     for i in range(number):
-        pheromon[i][current_coloring[i + 1] - 1] += 1 / col_num
+        pheromone[i][current_coloring[i + 1] - 1] += 1 / col_num
 
-    return pheromon
-#---------------------------------------------------
+    return pheromone
 
-#---------------------------------------------------
+
+# ---------------------------------------------------
+
+# ---------------------------------------------------
 # Функция, красящая наш граф с помощью алгоритма муравьиной колонии
 def coloring(data, number):
-    best_coloring = {}                                                      # Лучшая раскраска
-    best_col_num = 0                                                        # Количество цветов в лучшей раскраске
-    counter = 1                                                             # Инициализация счетчика итераций
-    tops = []                                                               # Создаем пустой список, в котором будем хранить вершины графа
-    bound = initialization(data, tops, number)                              # Вычисляем верхнюю границу хроматического числа и создаем вершины графа
-    pheromon = initialization_feromone(number, bound)                       # Инициализация феромона
+    best_coloring = {}  # Лучшая раскраска
+    best_col_num = 0  # Количество цветов в лучшей раскраске
+    counter = 1  # Инициализация счетчика итераций
+    tops = []  # Создаем пустой список, в котором будем хранить вершины графа
+    bound = initialization(data, tops, number)  # Вычисляем верхнюю границу хроматического числа и создаем вершины графа
+    pheromone = initialization_pheromone(number, bound)  # Инициализация феромона
 
     # Пока количество итераций без изменений меньше, либо равно максимальному количеству итераций
-    while (counter <= number_of_iteration):
+    while counter <= number_of_iteration:
         for i in range(number):
-            tops[i] = creating_ants(tops[i], number, bound)              # Создаем начальные колонии на вершинах
+            tops[i] = creating_ants(tops[i], number, bound)  # Создаем начальные колонии на вершинах
 
-        accessible_tops = [i for i in range(number)]                        # Список доступных вершин
-        current_coloring = {}                                               # Текущая раскраска
-        col_num = 0                                                         # Количество цветов в текущей раскраске
+        accessible_tops = [i for i in range(number)]  # Список доступных вершин
+        current_coloring = {}  # Текущая раскраска
+        col_num = 0  # Количество цветов в текущей раскраске
 
         # Начинаем покраску графа
         for i in range(number):
             # Выбираем рандомную вершину графа и красим ее
             random_id = random.randint(0, len(accessible_tops) - 1)
-            tops[accessible_tops[random_id]].color = color_definition(pheromon, tops, accessible_tops[random_id], number, bound)
+            tops[accessible_tops[random_id]].color = color_definition(pheromone, tops, accessible_tops[random_id],
+                                                                      number, bound)
             # Добавляем цвет вершины в словарь, в котором ключ -- имя вершины, значение -- ее цвет
             current_coloring[accessible_tops[random_id] + 1] = tops[accessible_tops[random_id]].color
 
@@ -203,19 +218,20 @@ def coloring(data, number):
             del accessible_tops[random_id]
 
         # Считаем количество задействованных цветов
-        helper = current_coloring.values()                                  # Вспомогательный список задействованных в текущей раскраске цветов
-        col_num = len(set(helper))                                          # Количество цветов в текущей раскраске
-            
+        helper = current_coloring.values()  # Вспомогательный список задействованных в текущей раскраске цветов
+        col_num = len(set(helper))  # Количество цветов в текущей раскраске
+
         # Обновляем феромон
-        pheromon = update_pheromon(pheromon, current_coloring, col_num, number, bound)
+        pheromone = update_pheromone(pheromone, current_coloring, col_num, number, bound)
 
         # Обновление счетчика
-        if ((col_num < best_col_num) or (len(best_coloring) == 0)):         # Флаг, показывающий была ли найдена более хорошая раскраска или нет
+        if ((col_num < best_col_num) or (
+                len(best_coloring) == 0)):  # Флаг, показывающий была ли найдена более хорошая раскраска или нет
             counter = 1
             best_col_num = col_num
             best_coloring = current_coloring
         else:
             counter += 1
-    
+
     return best_coloring
-#---------------------------------------------------
+# ---------------------------------------------------
