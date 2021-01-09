@@ -2,6 +2,7 @@
 import random
 from math import ceil
 number_of_iteration = 10
+Q = 1
 alpha = 1
 betta = 1
 
@@ -179,7 +180,7 @@ def update_pheromone(pheromone, current_coloring, col_num, number, bound):
             pheromone[i][j] *= p
 
     for i in range(number):
-        pheromone[i][current_coloring[i + 1] - 1] += 1 / col_num
+        pheromone[i][current_coloring[i + 1] - 1] += Q / col_num
 
     return pheromone
 
